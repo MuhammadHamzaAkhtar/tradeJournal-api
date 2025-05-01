@@ -1,1 +1,0 @@
-# tradeJournal-api
