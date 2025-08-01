@@ -13,6 +13,7 @@ const listing = require('./listing');
 const Chat = require('./chat');
 const TradeJournal = require('./TradeJournal');
 const { default: mongoose } = require('mongoose');
+const Blog = require('./Blog');
 
 const PORT = process.env.PORT || 4000;
 
@@ -574,35 +575,100 @@ app.delete('/chat/:id', async (req, res) => {
 
 app.post('/trades', async (req, res) => {
   try {
-      const trade = new TradeJournal(req.body);
-      await trade.save();
-      res.status(201).json(trade);
+    const trade = new TradeJournal(req.body);
+    await trade.save();
+    res.status(201).json(trade);
   } catch (error) {
-      res.status(400).json({ error: error.message });
+    res.status(400).json({ error: error.message });
   }
 });
 
 app.get('/trades', async (req, res) => {
   try {
-      const trades = await TradeJournal.find().sort({ createdAt: -1 });
-      res.status(200).json(trades);
+    const trades = await TradeJournal.find().sort({ createdAt: -1 });
+    res.status(200).json(trades);
   } catch (error) {
-      res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
 app.delete('/trades/:id', async (req, res) => {
   try {
-      const { id } = req.params;
-      const deletedTrade = await TradeJournal.findByIdAndDelete(id);
-      if (!deletedTrade) {
-          return res.status(404).json({ error: 'Trade not found' });
-      }
-      res.status(200).json({ message: 'Trade deleted successfully' });
+    const { id } = req.params;
+    const deletedTrade = await TradeJournal.findByIdAndDelete(id);
+    if (!deletedTrade) {
+      return res.status(404).json({ error: 'Trade not found' });
+    }
+    res.status(200).json({ message: 'Trade deleted successfully' });
   } catch (error) {
-      res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
+
+
+// POST: Create Blog
+app.post('/blog', async (req, res) => {
+  try {
+    const { heading, subHeading, content } = req.body;
+
+    // Validation should reject missing fields
+    if (!heading || !subHeading || !content) {
+      return res.status(400).json({ error: "All fields are required." });
+    }
+
+    const blog = new Blog({ heading, subHeading, content });
+    await blog.save();
+
+    res.status(201).json(blog);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET: All Blogs
+app.get('/blogs', async (req, res) => {
+  try {
+    const blogs = await Blog.find().sort({ createdAt: -1 });
+    res.status(200).json(blogs);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE: Delete Blog by ID
+app.delete('/blog/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedBlog = await Blog.findByIdAndDelete(id);
+
+    if (!deletedBlog) {
+      return res.status(404).json({ error: 'Blog not found' });
+    }
+
+    res.status(200).json({ message: 'Blog deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PATCH: Update Blog
+app.patch('/blog/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateBlog = req.body;
+
+    const updatedBlog = await Blog.findByIdAndUpdate(id, updateBlog, { new: true });
+
+    if (!updatedBlog) {
+      return res.status(404).json({ message: 'Blog not found' });
+    }
+
+    res.status(200).json(updatedBlog);
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating blog', error: error.message });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
